@@ -50,9 +50,9 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.flywaydb</groupId>
-        <artifactId>flyway-maven-plugin</artifactId>
-        <version>9.22.0</version>
+        <groupId>org.liquibase</groupId>
+        <artifactId>liquibase-maven-plugin</artifactId>
+        <version>4.25.1</version>
         <dependencies>
           <dependency>
             <groupId>mysql</groupId>
@@ -62,11 +62,9 @@
         </dependencies>
         <configuration>
           <url>jdbc:mysql://localhost:3306/userdb</url>
-          <user>root</user>
+          <username>root</username>
           <password>root123</password>
-          <locations>
-            <location>filesystem:src/main/resources/db/migration</location>
-          </locations>
+          <changeLogFile>src/main/resources/db/changelog/db.changelog-master.xml</changeLogFile>
         </configuration>
       </plugin>
     </plugins>

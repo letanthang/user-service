@@ -4,7 +4,8 @@ import com.example.userservice.config.Config;
 import com.example.userservice.config.PersistenceConfig;
 import com.example.userservice.controller.UserController;
 import com.example.userservice.repository.MySQLUserRepository;
-import com.sun.net.httpserver.HttpServer;
+import io.javalin.Javalin;
+import io.javalin.plugin.bundled.CorsPluginConfig;
 import jakarta.persistence.EntityManagerFactory;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
@@ -14,7 +15,6 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 
-import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -29,19 +29,46 @@ public class Main {
         var repository = new MySQLUserRepository(emf);
         var userController = new UserController(repository);
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(Config.PORT), 0);
-        server.createContext("/users", userController::handleAddUser);
-        server.createContext("/users", userController::handleGetUser);
-        server.createContext("/users", userController::handleListUsers);
-        server.setExecutor(null);
-        server.start();
+        Javalin app = Javalin.create(config -> {
+            config.bundledPlugins.enableCors(cors -> {
+                // Allow all origins
+                cors.addRule(CorsPluginConfig.CorsRule::anyHost);
+            });
+        });
+
+        // Define routes
+        app.post("/users", ctx -> {
+            String name = ctx.formParam("name");
+            if (name == null || name.isEmpty()) {
+                ctx.status(400).result("Name is required");
+                return;
+            }
+            userController.handleAddUser(name);
+            ctx.status(201).result("User added successfully");
+        });
+
+        app.get("/users/{id}", ctx -> {
+            String id = ctx.pathParam("id");
+            userController.handleGetUser(id).ifPresentOrElse(
+                user -> ctx.json(user),
+                () -> ctx.status(404).result("User not found")
+            );
+        });
+
+        app.get("/users", ctx -> {
+            ctx.json(userController.handleListUsers());
+        });
+
+        // Start the server
+        app.start(Config.PORT);
         System.out.println("Server started on port " + Config.PORT);
 
-        // Add shutdown hook to close EntityManagerFactory
+        // Add shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (emf != null) {
                 emf.close();
             }
+            app.stop();
         }));
     }
 
