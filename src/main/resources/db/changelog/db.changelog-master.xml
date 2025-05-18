@@ -7,4 +7,5 @@
 
     <include file="db/changelog/changes/001-add-user-fields.xml"/>
     <include file="db/changelog/changes/002-add-user-additional-fields.xml"/>
+    <include file="db/changelog/changes/003-change-user-id-to-integer.xml"/>
 </databaseChangeLog>

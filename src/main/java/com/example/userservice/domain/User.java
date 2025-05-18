@@ -2,15 +2,17 @@ package com.example.userservice.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class User {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     private String name;
     private String gender;
     private String nickname;
@@ -18,10 +20,9 @@ public class User {
     private LocalDate birthdate;
 
     public User() {
-        this.id = UUID.randomUUID().toString();
     }
 
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 

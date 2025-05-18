@@ -3,7 +3,7 @@ package com.example.userservice.dto;
 import java.time.LocalDate;
 
 public class UserResponse {
-    private String id;
+    private Integer id;
     private String name;
     private String gender;
     private String nickname;
@@ -11,8 +11,8 @@ public class UserResponse {
     private LocalDate birthdate;
 
     // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getGender() { return gender; }
