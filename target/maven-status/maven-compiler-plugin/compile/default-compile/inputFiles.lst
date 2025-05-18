@@ -1,8 +1,0 @@
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/Main.java
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/config/Config.java
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/controller/UserController.java
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/domain/User.java
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/repository/MySQLUserRepository.java
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/repository/UserRepository.java
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/usecase/AddUserUseCase.java
-/Users/mfv-computer-0295/JavaProjects/user-service/src/main/java/com/example/userservice/usecase/GetUserUseCase.java

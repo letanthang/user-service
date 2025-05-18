@@ -1,61 +1,84 @@
 package com.example.userservice.controller;
 
+import com.example.userservice.domain.User;
 import com.example.userservice.repository.UserRepository;
-import com.example.userservice.usecase.AddUserUseCase;
-import com.example.userservice.usecase.GetUserUseCase;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
+import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserController {
-    private final AddUserUseCase addUser;
-    private final GetUserUseCase getUser;
+    private final UserRepository repository;
 
     public UserController(UserRepository repository) {
-        this.addUser = new AddUserUseCase(repository);
-        this.getUser = new GetUserUseCase(repository);
+        this.repository = repository;
     }
 
     public void handleAddUser(HttpExchange exchange) throws IOException {
-        if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
-            exchange.sendResponseHeaders(405, -1);
+        if (!exchange.getRequestMethod().equals("POST")) {
+            exchange.sendResponseHeaders(405, -1); // Method Not Allowed
             return;
         }
 
-        var query = parseQuery(exchange.getRequestURI().getQuery());
-        addUser.execute(query.get("id"), query.get("name"));
+        String name = exchange.getRequestHeaders().getFirst("name");
+        if (name == null || name.isEmpty()) {
+            exchange.sendResponseHeaders(400, -1); // Bad Request
+            return;
+        }
 
-        respond(exchange, 200, "User added");
+        User user = new User();
+        user.setName(name);
+        repository.addUser(user);
+
+        String response = "User added with ID: " + user.getId();
+        exchange.sendResponseHeaders(200, response.length());
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(response.getBytes());
+        }
     }
 
     public void handleGetUser(HttpExchange exchange) throws IOException {
-        if (!exchange.getRequestMethod().equalsIgnoreCase("GET")) {
-            exchange.sendResponseHeaders(405, -1);
+        if (!exchange.getRequestMethod().equals("GET")) {
+            exchange.sendResponseHeaders(405, -1); // Method Not Allowed
             return;
         }
 
-        var query = parseQuery(exchange.getRequestURI().getQuery());
-        var user = getUser.execute(query.get("id"));
+        String id = exchange.getRequestHeaders().getFirst("id");
+        if (id == null || id.isEmpty()) {
+            exchange.sendResponseHeaders(400, -1); // Bad Request
+            return;
+        }
 
-        if (user.isPresent()) {
-            respond(exchange, 200, "User: " + user.get().getName());
+        Optional<User> userOpt = repository.getUserById(id);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            String response = "User found: " + user.getName();
+            exchange.sendResponseHeaders(200, response.length());
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response.getBytes());
+            }
         } else {
-            respond(exchange, 404, "User not found");
+            exchange.sendResponseHeaders(404, -1); // Not Found
         }
     }
 
-    private void respond(HttpExchange exchange, int code, String message) throws IOException {
-        exchange.sendResponseHeaders(code, message.length());
-        OutputStream os = exchange.getResponseBody();
-        os.write(message.getBytes());
-        os.close();
-    }
+    public void handleListUsers(HttpExchange exchange) throws IOException {
+        if (!exchange.getRequestMethod().equals("GET")) {
+            exchange.sendResponseHeaders(405, -1); // Method Not Allowed
+            return;
+        }
 
-    private Map<String, String> parseQuery(String query) {
-        return java.util.Arrays.stream(query.split("&"))
-                .map(kv -> kv.split("="))
-                .collect(java.util.stream.Collectors.toMap(kv -> kv[0], kv -> kv[1]));
+        List<User> users = repository.getAllUsers();
+        String response = users.stream()
+                .map(user -> String.format("ID: %s, Name: %s", user.getId(), user.getName()))
+                .collect(Collectors.joining("\n"));
+
+        exchange.sendResponseHeaders(200, response.length());
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(response.getBytes());
+        }
     }
 }

@@ -11,6 +11,8 @@ public class AddUserUseCase {
     }
 
     public void execute(String id, String name) {
-        repository.addUser(new User(id, name));
+        User user = new User();
+        user.setName(name);
+        repository.addUser(user);
     }
 }

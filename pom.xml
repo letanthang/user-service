@@ -8,21 +8,16 @@
     <maven.compiler.target>11</maven.compiler.target>
   </properties>
   <dependencies>
-<!--    <dependency>-->
-<!--      <groupId>com.h2database</groupId>-->
-<!--      <artifactId>h2</artifactId>-->
-<!--      <scope>runtime</scope>-->
-<!--      <version>LATEST</version>-->
-<!--    </dependency>-->
     <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-      <version>9.22.3</version> <!-- or latest -->
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.33</version>
     </dependency>
+    <!-- Liquibase -->
     <dependency>
-      <groupId>com.mysql</groupId>
-      <artifactId>mysql-connector-j</artifactId>
-      <version>9.3.0</version> <!-- or match your MySQL version -->
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+      <version>4.31.1</version>
     </dependency>
     <dependency>
       <groupId>org.hibernate.orm</groupId>
@@ -77,6 +72,24 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.liquibase</groupId>
+        <artifactId>liquibase-maven-plugin</artifactId>
+        <version>4.25.1</version>
+        <configuration>
+          <url>jdbc:mysql://localhost:3306/userdb</url>
+          <username>root</username>
+          <password>root123</password>
+          <changeLogFile>src/main/resources/db/changelog/db.changelog-master.xml</changeLogFile>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+          </dependency>
+        </dependencies>
       </plugin>
     </plugins>
   </build>
