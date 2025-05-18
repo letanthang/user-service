@@ -4,6 +4,8 @@ import com.example.userservice.config.Config;
 import com.example.userservice.config.PersistenceConfig;
 import com.example.userservice.controller.UserController;
 import com.example.userservice.repository.MySQLUserRepository;
+import com.example.userservice.dto.CreateUserRequest;
+import com.example.userservice.dto.UserResponse;
 import io.javalin.Javalin;
 import io.javalin.plugin.bundled.CorsPluginConfig;
 import jakarta.persistence.EntityManagerFactory;
@@ -14,6 +16,10 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.javalin.json.JavalinJackson;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -34,17 +40,22 @@ public class Main {
                 // Allow all origins
                 cors.addRule(CorsPluginConfig.CorsRule::anyHost);
             });
+            config.jsonMapper(new JavalinJackson(JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build(), true));
         });
 
         // Define routes
         app.post("/users", ctx -> {
-            String name = ctx.formParam("name");
-            if (name == null || name.isEmpty()) {
+            CreateUserRequest request = ctx.bodyAsClass(CreateUserRequest.class);
+            
+            if (request.getName() == null || request.getName().isEmpty()) {
                 ctx.status(400).result("Name is required");
                 return;
             }
-            userController.handleAddUser(name);
-            ctx.status(201).result("User added successfully");
+
+            UserResponse response = userController.handleAddUser(request);
+            ctx.status(201).json(response);
         });
 
         app.get("/users/{id}", ctx -> {
