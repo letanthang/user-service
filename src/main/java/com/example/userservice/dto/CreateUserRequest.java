@@ -8,6 +8,7 @@ public class CreateUserRequest {
     private String nickname;
     private String avatar;
     private LocalDate birthdate;
+    private String email;
 
     // Getters and Setters
     public String getName() { return name; }
@@ -20,4 +21,6 @@ public class CreateUserRequest {
     public void setAvatar(String avatar) { this.avatar = avatar; }
     public LocalDate getBirthdate() { return birthdate; }
     public void setBirthdate(LocalDate birthdate) { this.birthdate = birthdate; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 } 

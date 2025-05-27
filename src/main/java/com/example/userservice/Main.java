@@ -6,6 +6,10 @@ import com.example.userservice.controller.UserController;
 import com.example.userservice.repository.MySQLUserRepository;
 import com.example.userservice.dto.CreateUserRequest;
 import com.example.userservice.dto.UserResponse;
+import com.example.userservice.dto.UpdateUserRequest;
+import com.example.userservice.dto.ErrorResponse;
+import com.example.userservice.exception.InvalidParameterException;
+import com.example.userservice.usecase.*;
 import io.javalin.Javalin;
 import io.javalin.plugin.bundled.CorsPluginConfig;
 import jakarta.persistence.EntityManagerFactory;
@@ -16,7 +20,6 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.javalin.json.JavalinJackson;
@@ -33,7 +36,20 @@ public class Main {
         
         emf = PersistenceConfig.createEntityManagerFactory();
         var repository = new MySQLUserRepository(emf);
-        var userController = new UserController(repository);
+        
+        var createUserUseCase = new CreateUserUseCase(repository);
+        var getUserUseCase = new GetUserUseCase(repository);
+        var listUsersUseCase = new ListUsersUseCase(repository);
+        var deleteUserUseCase = new DeleteUserUseCase(repository);
+        var updateUserUseCase = new UpdateUserUseCase(repository);
+        
+        var userController = new UserController(
+            createUserUseCase,
+            getUserUseCase,
+            listUsersUseCase,
+            deleteUserUseCase,
+            updateUserUseCase
+        );
 
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableCors(cors -> {
@@ -47,27 +63,89 @@ public class Main {
 
         // Define routes
         app.post("/users", ctx -> {
-            CreateUserRequest request = ctx.bodyAsClass(CreateUserRequest.class);
-            
-            if (request.getName() == null || request.getName().isEmpty()) {
-                ctx.status(400).result("Name is required");
-                return;
-            }
+            try {
+                CreateUserRequest request = ctx.bodyAsClass(CreateUserRequest.class);
+                
+                if (request.getName() == null || request.getName().isEmpty()) {
+                    ctx.status(400).json(new ErrorResponse("INVALID_REQUEST", "Name is required"));
+                    return;
+                }
 
-            UserResponse response = userController.handleAddUser(request);
-            ctx.status(201).json(response);
+                if (request.getEmail() == null || request.getEmail().isEmpty()) {
+                    ctx.status(400).json(new ErrorResponse("INVALID_REQUEST", "Email is required"));
+                    return;
+                }
+
+                UserResponse response = userController.handleAddUser(request);
+                ctx.status(201).json(response);
+            } catch (Exception e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_REQUEST", "Invalid request payload: " + e.getMessage()));
+            }
         });
 
         app.get("/users/{id}", ctx -> {
-            String id = ctx.pathParam("id");
-            userController.handleGetUser(id).ifPresentOrElse(
-                user -> ctx.json(user),
-                () -> ctx.status(404).result("User not found")
-            );
+            try {
+                Integer id = Integer.parseInt(ctx.pathParam("id"));
+                userController.handleGetUser(id).ifPresentOrElse(
+                    user -> ctx.json(user),
+                    () -> ctx.status(404).json(new ErrorResponse("USER_NOT_FOUND", "User not found"))
+                );
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_ID_FORMAT", "Invalid ID format: ID must be a number"));
+            } catch (InvalidParameterException e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_PARAMETER", e.getMessage()));
+            }
         });
 
         app.get("/users", ctx -> {
-            ctx.json(userController.handleListUsers());
+            try {
+                ctx.json(userController.handleListUsers());
+            } catch (Exception e) {
+                ctx.status(500).json(new ErrorResponse("INTERNAL_ERROR", "Failed to retrieve users: " + e.getMessage()));
+            }
+        });
+
+        app.delete("/users/{id}", ctx -> {
+            try {
+                Integer id = Integer.parseInt(ctx.pathParam("id"));
+                if (userController.handleDeleteUser(id)) {
+                    ctx.status(204).result("");
+                } else {
+                    ctx.status(404).json(new ErrorResponse("USER_NOT_FOUND", "User not found"));
+                }
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_ID_FORMAT", "Invalid ID format: ID must be a number"));
+            } catch (InvalidParameterException e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_PARAMETER", e.getMessage()));
+            }
+        });
+
+        app.put("/users/{id}", ctx -> {
+            try {
+                Integer id = Integer.parseInt(ctx.pathParam("id"));
+                UpdateUserRequest request = ctx.bodyAsClass(UpdateUserRequest.class);
+                
+                if (request.getName() == null || request.getName().isEmpty()) {
+                    ctx.status(400).json(new ErrorResponse("INVALID_REQUEST", "Name is required"));
+                    return;
+                }
+
+                if (request.getEmail() == null || request.getEmail().isEmpty()) {
+                    ctx.status(400).json(new ErrorResponse("INVALID_REQUEST", "Email is required"));
+                    return;
+                }
+
+                userController.handleUpdateUser(id, request).ifPresentOrElse(
+                    user -> ctx.json(user),
+                    () -> ctx.status(404).json(new ErrorResponse("USER_NOT_FOUND", "User not found"))
+                );
+            } catch (NumberFormatException e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_ID_FORMAT", "Invalid ID format: ID must be a number"));
+            } catch (InvalidParameterException e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_PARAMETER", e.getMessage()));
+            } catch (Exception e) {
+                ctx.status(400).json(new ErrorResponse("INVALID_REQUEST", "Invalid request payload: " + e.getMessage()));
+            }
         });
 
         // Start the server

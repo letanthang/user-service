@@ -3,16 +3,16 @@ package com.example.userservice.usecase;
 import com.example.userservice.domain.User;
 import com.example.userservice.repository.UserRepository;
 
-public class AddUserUseCase {
+import java.util.List;
+
+public class ListUsersUseCase {
     private final UserRepository repository;
 
-    public AddUserUseCase(UserRepository repository) {
+    public ListUsersUseCase(UserRepository repository) {
         this.repository = repository;
     }
 
-    public void execute(String id, String name) {
-        User user = new User();
-        user.setName(name);
-        repository.addUser(user);
+    public List<User> execute() {
+        return repository.getAllUsers();
     }
-}
+} 

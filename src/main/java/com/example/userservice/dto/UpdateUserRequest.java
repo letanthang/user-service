@@ -2,8 +2,7 @@ package com.example.userservice.dto;
 
 import java.time.LocalDate;
 
-public class UserResponse {
-    private Integer id;
+public class UpdateUserRequest {
     private String name;
     private String gender;
     private String nickname;
@@ -12,8 +11,6 @@ public class UserResponse {
     private String email;
 
     // Getters and Setters
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getGender() { return gender; }

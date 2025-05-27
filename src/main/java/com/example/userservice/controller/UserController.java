@@ -2,40 +2,54 @@ package com.example.userservice.controller;
 
 import com.example.userservice.domain.User;
 import com.example.userservice.dto.CreateUserRequest;
+import com.example.userservice.dto.UpdateUserRequest;
 import com.example.userservice.dto.UserResponse;
-import com.example.userservice.repository.UserRepository;
+import com.example.userservice.usecase.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class UserController {
-    private final UserRepository repository;
+    private final CreateUserUseCase createUserUseCase;
+    private final GetUserUseCase getUserUseCase;
+    private final ListUsersUseCase listUsersUseCase;
+    private final DeleteUserUseCase deleteUserUseCase;
+    private final UpdateUserUseCase updateUserUseCase;
 
-    public UserController(UserRepository repository) {
-        this.repository = repository;
+    public UserController(CreateUserUseCase createUserUseCase,
+                         GetUserUseCase getUserUseCase,
+                         ListUsersUseCase listUsersUseCase,
+                         DeleteUserUseCase deleteUserUseCase,
+                         UpdateUserUseCase updateUserUseCase) {
+        this.createUserUseCase = createUserUseCase;
+        this.getUserUseCase = getUserUseCase;
+        this.listUsersUseCase = listUsersUseCase;
+        this.deleteUserUseCase = deleteUserUseCase;
+        this.updateUserUseCase = updateUserUseCase;
     }
 
     public UserResponse handleAddUser(CreateUserRequest request) {
-        User user = new User();
-        user.setName(request.getName());
-        user.setGender(request.getGender());
-        user.setNickname(request.getNickname());
-        user.setAvatar(request.getAvatar());
-        user.setBirthdate(request.getBirthdate());
-        
-        repository.addUser(user);
+        User user = createUserUseCase.execute(request);
         return mapToResponse(user);
     }
 
-    public Optional<UserResponse> handleGetUser(String id) {
-        return repository.getUserById(id).map(this::mapToResponse);
+    public Optional<UserResponse> handleGetUser(Integer id) {
+        return getUserUseCase.execute(id).map(this::mapToResponse);
     }
 
     public List<UserResponse> handleListUsers() {
-        return repository.getAllUsers().stream()
+        return listUsersUseCase.execute().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public boolean handleDeleteUser(Integer id) {
+        return deleteUserUseCase.execute(id);
+    }
+
+    public Optional<UserResponse> handleUpdateUser(Integer id, UpdateUserRequest request) {
+        return updateUserUseCase.execute(id, request).map(this::mapToResponse);
     }
 
     private UserResponse mapToResponse(User user) {
@@ -46,6 +60,7 @@ public class UserController {
         response.setNickname(user.getNickname());
         response.setAvatar(user.getAvatar());
         response.setBirthdate(user.getBirthdate());
+        response.setEmail(user.getEmail());
         return response;
     }
 }

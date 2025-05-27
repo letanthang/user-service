@@ -1,22 +1,19 @@
 package com.example.userservice.usecase;
 
-import com.example.userservice.domain.User;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.exception.InvalidParameterException;
 
-import java.util.Optional;
-
-public class GetUserUseCase {
+public class DeleteUserUseCase {
     private final UserRepository repository;
 
-    public GetUserUseCase(UserRepository repository) {
+    public DeleteUserUseCase(UserRepository repository) {
         this.repository = repository;
     }
 
-    public Optional<User> execute(Integer id) {
+    public boolean execute(Integer id) {
         if (id == null || id <= 0) {
             throw new InvalidParameterException("Invalid user ID: ID must be a positive number");
         }
-        return repository.getUserById(id);
+        return repository.deleteUser(id);
     }
-}
+} 

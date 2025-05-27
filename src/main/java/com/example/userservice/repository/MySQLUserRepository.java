@@ -26,9 +26,8 @@ public class MySQLUserRepository implements UserRepository {
         }
     }
 
-
     @Override
-    public Optional<User> getUserById(String id) {
+    public Optional<User> getUserById(Integer id) {
         EntityManager em = emf.createEntityManager();
         try {
             User user = em.find(User.class, id);
@@ -44,6 +43,47 @@ public class MySQLUserRepository implements UserRepository {
         try {
             return em.createQuery("SELECT u FROM User u", User.class)
                     .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public boolean deleteUser(Integer id) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            User user = em.find(User.class, id);
+            if (user != null) {
+                em.remove(user);
+                em.getTransaction().commit();
+                return true;
+            }
+            em.getTransaction().rollback();
+            return false;
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public boolean updateUser(Integer id, User updatedUser) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            User existingUser = em.find(User.class, id);
+            if (existingUser != null) {
+                existingUser.setName(updatedUser.getName());
+                existingUser.setEmail(updatedUser.getEmail());
+                existingUser.setGender(updatedUser.getGender());
+                existingUser.setNickname(updatedUser.getNickname());
+                existingUser.setAvatar(updatedUser.getAvatar());
+                existingUser.setBirthdate(updatedUser.getBirthdate());
+                em.getTransaction().commit();
+                return true;
+            }
+            em.getTransaction().rollback();
+            return false;
         } finally {
             em.close();
         }

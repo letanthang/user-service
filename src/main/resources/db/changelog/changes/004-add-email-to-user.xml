@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="004" author="user-service">
+        <addColumn tableName="users">
+            <column name="email" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        
+        <update tableName="users">
+            <column name="email" valueComputed="CONCAT(name, '@example.com')"/>
+        </update>
+
+        <addUniqueConstraint tableName="users"
+            columnNames="email"
+            constraintName="uk_users_email"/>
+
+        <rollback>
+            <dropUniqueConstraint tableName="users" constraintName="uk_users_email"/>
+            <dropColumn tableName="users" columnName="email"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog> 
