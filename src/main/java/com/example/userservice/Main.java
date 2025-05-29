@@ -10,8 +10,10 @@ import com.example.userservice.dto.UpdateUserRequest;
 import com.example.userservice.dto.ErrorResponse;
 import com.example.userservice.exception.InvalidParameterException;
 import com.example.userservice.usecase.*;
+import com.example.userservice.middleware.AuthMiddleware;
 import io.javalin.Javalin;
 import io.javalin.plugin.bundled.CorsPluginConfig;
+import io.javalin.http.HttpResponseException;
 import jakarta.persistence.EntityManagerFactory;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
@@ -61,6 +63,16 @@ public class Main {
                 .build(), true));
         });
 
+        // Add custom error handler for HttpResponseException
+        app.exception(HttpResponseException.class, (e, ctx) -> {
+            ctx.status(e.getStatus());
+            ctx.json(new ErrorResponse("UNAUTHORIZED", e.getMessage()));
+        });
+
+        // Apply authentication middleware
+        app.before("/users/*", AuthMiddleware.authenticate);
+        app.before("/users", AuthMiddleware.authenticate);
+        
         // Define routes
         app.post("/users", ctx -> {
             try {
