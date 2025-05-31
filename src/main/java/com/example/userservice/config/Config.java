@@ -1,7 +1,5 @@
 package com.example.userservice.config;
 
-import java.util.Properties;
-
 public class Config {
     public static String DB_URL;
     public static String DB_USER;
