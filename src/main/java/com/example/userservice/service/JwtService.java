@@ -5,8 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 
+import com.example.userservice.config.Config;
+
 public class JwtService {
-    private static final String SECRET = "your-256-bit-secret-your-256-bit-secret-your-256-bit-secret-your-256-bit-secret";
+    private static final String SECRET = Config.JWT_SECRET;
 
     private static Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
