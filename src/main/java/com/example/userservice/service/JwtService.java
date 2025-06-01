@@ -9,6 +9,7 @@ import com.example.userservice.config.Config;
 
 public class JwtService {
     private static final String SECRET = Config.JWT_SECRET;
+    private static final String ROLE_CLAIM = "role";
 
     private static Key getSigningKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
@@ -26,12 +27,12 @@ public class JwtService {
         }
     }
 
-    public static String getEmailFromToken(String token) {
+    public static CustomClaim getClaimFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getSubject();
+        return new CustomClaim(claims.getSubject(), claims.get(ROLE_CLAIM, String.class));
     }
 } 

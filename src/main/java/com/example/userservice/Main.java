@@ -14,7 +14,9 @@ import com.example.userservice.middleware.AuthMiddleware;
 import io.javalin.Javalin;
 import io.javalin.plugin.bundled.CorsPluginConfig;
 import io.javalin.http.HttpResponseException;
+import io.javalin.http.HttpStatus;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceException;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
@@ -24,10 +26,15 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.mysql.cj.jdbc.exceptions.MySQLQueryInterruptedException;
+
 import io.javalin.json.JavalinJackson;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLIntegrityConstraintViolationException;
+
+import org.hibernate.exception.ConstraintViolationException;
 
 public class Main {
     private static EntityManagerFactory emf;
@@ -66,16 +73,27 @@ public class Main {
         // Add custom error handler for HttpResponseException
         app.exception(HttpResponseException.class, (e, ctx) -> {
             ctx.status(e.getStatus());
-            ctx.json(new ErrorResponse("UNAUTHORIZED", e.getMessage()));
+            ctx.json(new ErrorResponse(getStatusMessage(e.getStatus()), e.getMessage()));
         });
 
+        app.exception(ConstraintViolationException.class, (e, ctx) -> {
+            Throwable cause = e.getCause();
+            if (cause instanceof SQLIntegrityConstraintViolationException) {
+                ctx.status(HttpStatus.CONFLICT);
+                ctx.json(new ErrorResponse("CONFLICT_RESOURCE", e.getMessage()));
+            } else {
+                ctx.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                ctx.json(new ErrorResponse("SERVER_ERRROR", e.getMessage()));
+            }
+        });
+
+        
         // Apply authentication middleware
         app.before("/users/*", AuthMiddleware.authenticate);
         app.before("/users", AuthMiddleware.authenticate);
         
         // Define routes
         app.post("/users", ctx -> {
-            try {
                 CreateUserRequest request = ctx.bodyAsClass(CreateUserRequest.class);
                 
                 if (request.getName() == null || request.getName().isEmpty()) {
@@ -90,9 +108,6 @@ public class Main {
 
                 UserResponse response = userController.handleAddUser(request);
                 ctx.status(201).json(response);
-            } catch (Exception e) {
-                ctx.status(400).json(new ErrorResponse("INVALID_REQUEST", "Invalid request payload: " + e.getMessage()));
-            }
         });
 
         app.get("/users/{id}", ctx -> {
@@ -183,5 +198,17 @@ public class Main {
             e.printStackTrace();
             throw new RuntimeException("Migration failed", e);
         }
+    }
+
+    public static String getStatusMessage(int statusCode) {
+        return switch (statusCode) {
+            case 400 -> "BAD_REQUEST";
+            case 401 -> "UNAUTHORIZED";
+            case 403 -> "FORBIDDEN";
+            case 404 -> "NOT_FOUND";
+            case 409 -> "CONFLICT_RESOURCE";
+            case 500 -> "INTERNAL_SERVER_ERROR";
+            default -> "UNKNOWN";
+        };
     }
 }

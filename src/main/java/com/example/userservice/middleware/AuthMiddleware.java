@@ -1,6 +1,7 @@
 package com.example.userservice.middleware;
 
 import com.example.userservice.dto.ErrorResponse;
+import com.example.userservice.service.CustomClaim;
 import com.example.userservice.service.JwtService;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
@@ -20,7 +21,12 @@ public class AuthMiddleware {
             throw new HttpResponseException(401, "Invalid or expired token");
         }
 
+        CustomClaim claim = JwtService.getClaimFromToken(token);
+        if (!claim.getRole().equals("ADMIN")) {
+            throw new HttpResponseException(403, "Insufficient privileges");
+        }
+
         // Add the authenticated email to the context for use in handlers
-        ctx.attribute("authenticatedEmail", JwtService.getEmailFromToken(token));
+        ctx.attribute("authenticatedEmail", claim.getEmail());
     };
 } 
