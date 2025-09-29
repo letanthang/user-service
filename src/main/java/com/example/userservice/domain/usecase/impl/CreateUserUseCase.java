@@ -1,17 +1,18 @@
-package com.example.userservice.usecase;
+package com.example.userservice.domain.usecase.impl;
 
-import com.example.userservice.domain.User;
+import com.example.userservice.domain.entity.User;
 import com.example.userservice.dto.CreateUserRequest;
-import com.example.userservice.repository.UserRepository;
-import com.example.userservice.exception.InvalidParameterException;
+import com.example.userservice.domain.repository.UserRepository;
+import com.example.userservice.domain.exception.InvalidParameterException;
 
-public class CreateUserUseCase {
+public class CreateUserUseCase implements com.example.userservice.domain.usecase.CreateUserUseCase {
     private final UserRepository repository;
 
     public CreateUserUseCase(UserRepository repository) {
         this.repository = repository;
     }
 
+    @Override
     public User execute(CreateUserRequest request) {
         if (request.getName() == null || request.getName().isEmpty()) {
             throw new InvalidParameterException("Name is required");

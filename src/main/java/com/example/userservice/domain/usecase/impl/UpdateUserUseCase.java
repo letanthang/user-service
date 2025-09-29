@@ -1,19 +1,22 @@
-package com.example.userservice.usecase;
+package com.example.userservice.domain.usecase.impl;
 
-import com.example.userservice.domain.User;
+import com.example.userservice.domain.entity.User;
+import com.example.userservice.domain.exception.NotFoundException;
 import com.example.userservice.dto.UpdateUserRequest;
-import com.example.userservice.repository.UserRepository;
-import com.example.userservice.exception.InvalidParameterException;
+import com.example.userservice.domain.repository.UserRepository;
+import com.example.userservice.domain.exception.InvalidParameterException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public class UpdateUserUseCase {
+public class UpdateUserUseCase implements com.example.userservice.domain.usecase.UpdateUserUseCase {
     private final UserRepository repository;
 
     public UpdateUserUseCase(UserRepository repository) {
         this.repository = repository;
     }
 
+    @Override
     public Optional<User> execute(Integer id, UpdateUserRequest request) {
         if (id == null || id <= 0) {
             throw new InvalidParameterException("Invalid user ID: ID must be a positive number");
@@ -28,11 +31,16 @@ public class UpdateUserUseCase {
         // First get the existing user
         Optional<User> existingUserOpt = repository.getUserById(id);
         if (existingUserOpt.isEmpty()) {
-            return Optional.empty();
+            throw new NotFoundException("User", id);
         }
 
-        User existingUser = existingUserOpt.get();
-        
+        var user = existingUserOpt.get();
+        updateExistingUser(request, user);
+        repository.updateUser(existingUserOpt.get());
+        return existingUserOpt;
+    }
+
+    private void updateExistingUser(UpdateUserRequest request, User existingUser) {
         // Update only the fields that are provided
         if (request.getName() != null) {
             existingUser.setName(request.getName());
@@ -52,10 +60,5 @@ public class UpdateUserUseCase {
         if (request.getEmail() != null) {
             existingUser.setEmail(request.getEmail());
         }
-
-        if (repository.updateUser(id, existingUser)) {
-            return repository.getUserById(id);
-        }
-        return Optional.empty();
     }
-} 
+}

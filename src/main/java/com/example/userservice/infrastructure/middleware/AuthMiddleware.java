@@ -1,9 +1,7 @@
-package com.example.userservice.middleware;
+package com.example.userservice.infrastructure.middleware;
 
-import com.example.userservice.dto.ErrorResponse;
 import com.example.userservice.service.CustomClaim;
 import com.example.userservice.service.JwtService;
-import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.http.HttpResponseException;
 
@@ -22,7 +20,8 @@ public class AuthMiddleware {
         }
 
         CustomClaim claim = JwtService.getClaimFromToken(token);
-        if (!claim.getRole().equals("ADMIN")) {
+
+        if (!ctx.path().equals("/me")  && !claim.getRole().equals("ADMIN")) {
             throw new HttpResponseException(403, "Insufficient privileges");
         }
 

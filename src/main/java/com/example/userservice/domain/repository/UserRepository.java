@@ -1,6 +1,6 @@
-package com.example.userservice.repository;
+package com.example.userservice.domain.repository;
 
-import com.example.userservice.domain.User;
+import com.example.userservice.domain.entity.User;
 
 import java.util.Optional;
 import java.util.List;
@@ -8,7 +8,8 @@ import java.util.List;
 public interface UserRepository {
     void addUser(User user);
     Optional<User> getUserById(Integer id);
+    Optional<User> getUserByEmail(String email);
     List<User> getAllUsers();
     boolean deleteUser(Integer id);
-    boolean updateUser(Integer id, User user);
+    void updateUser(User user);
 }

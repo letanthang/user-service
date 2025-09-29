@@ -4,7 +4,7 @@
     <persistence-unit name="userPU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
-        <class>com.example.userservice.domain.User</class> <!-- your @Entity classes -->
+        <class>com.example.userservice.domain.entity.User</class> <!-- your @Entity classes -->
 
         <properties>
             <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
