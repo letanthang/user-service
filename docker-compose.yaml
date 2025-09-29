@@ -1,0 +1,11 @@
+services:
+  user:
+    image: "user-service"
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: "jdbc:mysql://host.orb.internal:3306/userdb"
+      DB_USER: wws
+      DB_PASS: "wws_password#2025"
+      JWT_SECRET: "your-very-long-jwt-secret-string-2025-your-very-long-jwt-secret-string-2025"
+      AUTH_SERVICE_URL: "http://host.orb.internal:8081"
