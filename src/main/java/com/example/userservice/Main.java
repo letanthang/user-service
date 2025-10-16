@@ -116,7 +116,7 @@ public class Main {
             }
         });
 
-        app.get("/me", ctx -> {
+        app.get("/users/me", ctx -> {
             userController.handleGetMe(ctx.attribute("authenticatedEmail")).ifPresentOrElse(
                     ctx::json,
                     () -> {
@@ -125,7 +125,7 @@ public class Main {
             );
         });
 
-        app.put("/me", ctx -> {
+        app.put("/users/me", ctx -> {
             UpdateMeRequest request = ctx.bodyAsClass(UpdateMeRequest.class);
 
             userController.handleUpdateMe(ctx.attribute("authenticatedEmail"), request).ifPresent(
